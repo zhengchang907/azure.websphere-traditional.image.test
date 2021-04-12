@@ -57,9 +57,22 @@ jobs:
         run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
       - name: Build and test
         run: mvn -Dgit.repo=$userName -Dgit.tag=1.0.1 -DibmUserId=$ibmUserId -DibmUserPwd=$ibmPassword -DvmAdminId=$vmAdminId -DvmAdminPwd=$vmAdminPassword -DdnsLabelPrefix=wsp -Dtest.args="-Test All" -Ptemplate-validation-tests clean install --file ${{ env.offerName }}/pom.xml
-      - name: Run deployment script
-        run: ./${{ env.offerName }}/target/arm/deploy.azcli -n zhengtest -f /home/zhengchang/workspace/zhengchang/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip -i 1970354a-e600-4847-8848-89ea15c7a8c3 -g zheng-test-rg -l eastus
       - uses: azure/login@v1
         id: azure-login
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: File authentication
+        run: |
+          sudo chmod 777 -R target/
+      - name: Run deployment script
+        run: ./${{ env.offerName }}/target/arm/deploy.azcli -n zhengtest -f /home/zhengchang/workspace/zhengchang/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip -i 1970354a-e600-4847-8848-89ea15c7a8c3 -g zheng-test-rg -l eastus
+      - uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            az storage blob download \
+            --container-name zheng-test-rg-stageartifacts \
+            --file /agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
+            --name agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
+            --account-key "nAChmh2IUQtirid7js2RothpIHYMdjwJM8w1SyyWZHmT01bSyj0UbG3eBUCZSV480D9+zUaeLWFSwmL+brJetw==" \
+            --account-name stagevhekpiwmxfyjjqoocjb 
