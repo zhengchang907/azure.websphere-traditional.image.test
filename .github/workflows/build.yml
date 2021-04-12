@@ -71,9 +71,9 @@ jobs:
           inlineScript: |
             az storage blob download \
             --container-name zheng-test-rg-stageartifacts \
-            --file /${{ env.offerName }}/ibmInstaller/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
+            --file /${{ env.offerName }}/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
             --name agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
             --account-key secrets.STORAGE_ACCOUNT_KEY \
             --account-name stagevhekpiwmxfyjjqoocjb 
       - name: Run deployment script
-        run: ./${{ env.offerName }}/target/arm/deploy.azcli -n zhengtest -f ./${{ env.offerName }}/ibmInstaller/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip -i 1970354a-e600-4847-8848-89ea15c7a8c3 -g zheng-test-rg -l eastus
+        run: ./${{ env.offerName }}/target/arm/deploy.azcli -n zhengtest -f /${{ env.offerName }}/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip -i 1970354a-e600-4847-8848-89ea15c7a8c3 -g zheng-test-rg -l eastus
