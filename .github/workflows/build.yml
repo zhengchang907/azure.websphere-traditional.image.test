@@ -62,16 +62,22 @@ jobs:
         id: azure-login
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - uses: azure/CLI@v1
+      - uses: ulaval/azure-blob-copy-action@v1
         with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            az storage blob download \
-            --container-name zheng-test-rg-stageartifacts \
-            --file ${{ env.offerName }}/target/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
-            --name agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
-            --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} \
-            --account-name stagevhekpiwmxfyjjqoocjb 
+          action: download
+          connection_string: ${{ secrets.CONNECTION_STRING }}
+          container_name: zheng-test-rg-stageartifacts
+          blob_directory: agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip
+          local_directory: ${{ env.offerName }}/target/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip
+        # with:
+        #   azcliversion: ${{ env.azCliVersion }}
+        #   inlineScript: |
+        #     az storage blob download \
+        #     --container-name zheng-test-rg-stageartifacts \
+        #     --file ${{ env.offerName }}/target/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
+        #     --name agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
+        #     --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} \
+        #     --account-name stagevhekpiwmxfyjjqoocjb 
       - name: File authentication
         run: |
           sudo chmod 777 -R ./${{ env.offerName }}/target/
