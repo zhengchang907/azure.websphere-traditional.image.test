@@ -79,4 +79,4 @@ jobs:
         run: |
           cd ${{ env.offerName }}/target/arm
           ls
-          ./deploy.azcli -n zhengtest -f ${{ env.offerName }}/target/arm/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip -i 1970354a-e600-4847-8848-89ea15c7a8c3 -g zheng-test-rg -l eastus
+          ./deploy.azcli -n zhengtest -f agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip -i 1970354a-e600-4847-8848-89ea15c7a8c3 -g zheng-test-rg -l eastus
