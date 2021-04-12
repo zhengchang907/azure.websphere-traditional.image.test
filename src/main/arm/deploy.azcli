@@ -137,7 +137,7 @@ resourceGroupLocation=$( az group show --name $resourceGroupName | jq -r '.locat
 
 #Create storage account and upload IBM Installation Manager install kit to storage account
 #Create storage account if not existing
-storageAccountName=${{ github.run_id }}-${{ github.run_number }}
+storageAccountName=zhengtest001
 storageAccountName="${storageAccountName:0:19}"
 storageAccountName="stage$storageAccountName"
 
