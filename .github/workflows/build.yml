@@ -57,7 +57,7 @@ jobs:
       - name: Build azure-javaee-iaas
         run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
       - name: Build and test
-        run: mvn -Dgit.repo=$userName -Dgit.tag=1.0.1 -DibmUserId=$ibmUserId -DibmUserPwd=$ibmPassword -DvmAdminId=$vmAdminId -DvmAdminPwd=$vmAdminPassword -DdnsLabelPrefix=wsp -Dtest.args="-Test All" -Ptemplate-validation-tests clean install --file ${{ env.offerName }}/pom.xml
+        run: mvn -Dgit.repo=${{ userName }} -Dgit.tag=1.0.1 -DibmUserId=${{ ibmUserId }} -DibmUserPwd=${{ ibmPassword }} -DvmAdminId=${{ vmAdminId }} -DvmAdminPwd=${{ vmAdminPassword }} -DdnsLabelPrefix=wsp -Dtest.args="-Test All" -Ptemplate-validation-tests clean install --file ${{ env.offerName }}/pom.xml
       - uses: azure/login@v1
         id: azure-login
         with:
