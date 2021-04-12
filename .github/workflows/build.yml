@@ -74,5 +74,5 @@ jobs:
             --container-name zheng-test-rg-stageartifacts \
             --file /agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
             --name agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
-            --account-key "nAChmh2IUQtirid7js2RothpIHYMdjwJM8w1SyyWZHmT01bSyj0UbG3eBUCZSV480D9+zUaeLWFSwmL+brJetw==" \
+            --account-key secrets.STORAGE_ACCOUNT_KEY \
             --account-name stagevhekpiwmxfyjjqoocjb 
