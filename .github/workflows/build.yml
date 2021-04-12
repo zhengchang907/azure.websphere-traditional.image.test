@@ -14,6 +14,7 @@ on:
   workflow_dispatch:
 
 env:
+  azCliVersion: 2.6.0
   ref_javaee: 6addd99d8bc3f472e040f11c053a37e1ac370229
   offerName: azure.websphere-traditional.image
   userEmail: ${{ secrets.USER_EMAIL }}
