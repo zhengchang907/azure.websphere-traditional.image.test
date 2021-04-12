@@ -141,6 +141,8 @@ storageAccountName=$(cat /dev/urandom | tr -dc 'a-z' | fold -w ${1:-32} | head -
 storageAccountName="${storageAccountName:0:19}"
 storageAccountName="stage$storageAccountName"
 
+echo "storageAccountName: $storageAccountName"
+
 if [[ -z $( az storage account list -o json | jq -r --arg accountName "$storageAccountName" '.[].name | select(. == $accountName)' ) ]]; then
 	echo "Storage account with name" $storageAccountName "could not be found. Creating new storage account..."
 	set -e
