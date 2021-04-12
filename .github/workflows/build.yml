@@ -79,7 +79,7 @@ jobs:
     steps:
       - name: File authentication
         run: |
-          sudo chmod 777 -R ./${{ env.offerName }}/target/
+          sudo chmod 777 -R ${{ env.offerName }}/target/
       - name: Run deployment script
         run: |
           cd ${{ env.offerName }}/target/arm
