@@ -43,6 +43,9 @@
         "ibmUserPwd": {
             "type": "securestring"
         },
+        "vmName": {
+            "type": "string"
+        },
         "vmAdminId": {
             "type": "string"
         },
@@ -65,7 +68,7 @@
         "name_networkSecurityGroup": "[concat(variables('const_dnsLabelPrefix'), '-nsg')]",
         "name_publicIPAddress": "[concat(variables('name_virtualMachine'), '-ip')]",
         "name_storageAccount": "[concat('storage',take(replace(parameters('guidValue'),'-',''),6))]",
-        "name_virtualMachine": "[concat('wasVM', take(replace(parameters('guidValue'),'-',''),6))]",
+        "name_virtualMachine": "[parameters('vmName')]",
         "name_virtualNetwork": "[concat(variables('const_dnsLabelPrefix'), '-vnet')]",
         "ref_networkInterface": "[resourceId('Microsoft.Network/networkInterfaces', variables('name_networkInterface'))]",
         "ref_networkSecurityGroup": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('name_networkSecurityGroup'))]",

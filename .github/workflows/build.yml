@@ -21,8 +21,10 @@ env:
   userName: ${{ secrets.USER_NAME }}
   ibmUserId: ${{ secrets.IBM_USER_ID }}
   ibmPassword: ${{ secrets.IBM_PASSWORD }}
+  vmName: was${{ github.run_id }}${{ github.run_number }}
   vmAdminId: websphere
   vmAdminPassword: Secret123456
+  vmImageName: wasImage${{ github.run_id }}${{ github.run_number }}
   storagteResourceGroup: zheng-test-rg
   storageAccountName: stagevhekpiwmxfyjjqoocjb
   storageContainerName: zheng-test-rg-stageartifacts
@@ -60,7 +62,7 @@ jobs:
       - name: Build azure-javaee-iaas
         run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
       - name: Build and test
-        run: mvn -Dgit.repo=${{ env.userName }} -Dgit.tag=1.0.1 -DibmUserId=${{ env.ibmUserId }} -DibmUserPwd=${{ env.ibmPassword }} -DvmAdminId=${{ env.vmAdminId }} -DvmAdminPwd=${{ env.vmAdminPassword }} -DdnsLabelPrefix=wsp -Dtest.args="-Test All" -Ptemplate-validation-tests clean install --file ${{ env.offerName }}/pom.xml
+        run: mvn -Dgit.repo=${{ env.userName }} -Dgit.tag=1.0.1 -DibmUserId=${{ env.ibmUserId }} -DibmUserPwd=${{ env.ibmPassword }} -DvmName=${{ env.vmName }} -DvmAdminId=${{ env.vmAdminId }} -DvmAdminPwd=${{ env.vmAdminPassword }} -DdnsLabelPrefix=wsp -Dtest.args="-Test All" -Ptemplate-validation-tests clean install --file ${{ env.offerName }}/pom.xml
       - uses: azure/login@v1
         id: azure-login
         with:
@@ -99,3 +101,10 @@ jobs:
           if [[ $? -eq 0 ]]; then
             echo "Template has been successfully deployed"
           fi
+      - name: Generate VM Image
+        run: |
+          az vm deallocate --resource-group ${{ env.storagteResourceGroup }} --name ${{ env.vmName }}
+          az vm generalize --resource-group ${{ env.storagteResourceGroup }} --name ${{ env.vmName }}
+          az image create --resource-group ${{ env.storagteResourceGroup }} --name ${{ env.vmImageName }} --source ${{ env.vmName }}
+
+    
