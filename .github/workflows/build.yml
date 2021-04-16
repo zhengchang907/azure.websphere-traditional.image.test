@@ -77,7 +77,7 @@ jobs:
           blobEndpoint=$( az storage account show -n ${{ env.storageAccountName }} -g ${{ env.storagteResourceGroup }} -o json | jq -r '.primaryEndpoints.blob' )
           echo $blobEndpoint
 
-          installKitUri=$blobEndpoint${{ env.storageContainerName }}/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip?$sasToken
+          installKitUri=${blobEndpoint}${{ env.storageContainerName }}/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip?$sasToken
           
           echo $installKitUri
 
