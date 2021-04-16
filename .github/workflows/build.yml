@@ -23,6 +23,9 @@ env:
   ibmPassword: ${{ secrets.IBM_PASSWORD }}
   vmAdminId: websphere
   vmAdminPassword: Secret123456
+  storagteResourceGroup: zheng-test-rg
+  storageAccountName: stagevhekpiwmxfyjjqoocjb
+  storageContainerName: zheng-test-rg-stageartifacts
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -62,20 +65,40 @@ jobs:
         id: azure-login
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            az storage blob download \
-            --container-name zheng-test-rg-stageartifacts \
-            --file ${{ env.offerName }}/target/arm/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
-            --name agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
-            --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} \
-            --account-name stagevhekpiwmxfyjjqoocjb 
-      - name: File authentication
-        run: |
-          sudo chmod 777 -R ${{ env.offerName }}/target/
+      # - uses: azure/CLI@v1
+      #   with:
+      #     azcliversion: ${{ env.azCliVersion }}
+      #     inlineScript: |
+      #       az storage blob download \
+      #       --container-name ${{ env.storageContainerName }} \
+      #       --file ${{ env.offerName }}/target/arm/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
+      #       --name agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
+      #       --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} \
+      #       --account-name ${{ env.storageAccountName }} 
       - name: Run deployment script
         run: |
           cd ${{ env.offerName }}/target/arm
-          ./deploy.azcli -n zhengtest -f agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip -i 1970354a-e600-4847-8848-89ea15c7a8c3 -g zheng-test-rg -l eastus
+
+          #Get a 4-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
+          plusFourHoursUtc=$(date -u -v+4H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plusFourHoursUtc=$(date -u --date "$dte 4 hour" +%Y-%m-%dT%H:%MZ)
+
+          #Generate SAS token
+          sasToken=$( az storage container generate-sas -n ${{ env.storageContainerName }} --permissions r --expiry "$plusFourHoursUtc" --account-name ${{ env.storageAccountName }} --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} -o json | sed 's/"//g')
+          blobEndpoint=$( az storage account show -n ${{ env.storageAccountName }} -g ${{ env.storagteResourceGroup }} -o json | jq -r '.primaryEndpoints.blob' )
+          installKitUri=${{ env.storageContainerName }}/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip?$sasToken
+
+          #parameters JSON
+          parametersJson=$( cat ./parameters.json | jq '.parameters' )
+          parametersJson=$( echo "$parametersJson" | jq --arg uri "$installKitUri" '{"installKitUri": {"value":$uri}} + .' )
+          parametersJson=$( echo "$parametersJson" | jq -c '.' )
+
+          #Start deployment
+          echo "Starting deployment..."
+          (
+            az deployment group create --name ${{ github.run_id }}${{ github.run_number }} --resource-group ${{ env.storagteResourceGroup }} \
+              --template-file ./mainTemplate.json --parameters "$parametersJson"
+          )
+
+          if [[ $? -eq 0 ]]; then
+            echo "Template has been successfully deployed"
+          fi
