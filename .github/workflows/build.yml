@@ -65,16 +65,6 @@ jobs:
         id: azure-login
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      # - uses: azure/CLI@v1
-      #   with:
-      #     azcliversion: ${{ env.azCliVersion }}
-      #     inlineScript: |
-      #       az storage blob download \
-      #       --container-name ${{ env.storageContainerName }} \
-      #       --file ${{ env.offerName }}/target/arm/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
-      #       --name agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip \
-      #       --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} \
-      #       --account-name ${{ env.storageAccountName }} 
       - name: Run deployment script
         run: |
           cd ${{ env.offerName }}/target/arm
@@ -85,7 +75,7 @@ jobs:
           #Generate SAS token
           sasToken=$( az storage container generate-sas -n ${{ env.storageContainerName }} --permissions r --expiry "$plusFourHoursUtc" --account-name ${{ env.storageAccountName }} --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} -o json | sed 's/"//g')
           blobEndpoint=$( az storage account show -n ${{ env.storageAccountName }} -g ${{ env.storagteResourceGroup }} -o json | jq -r '.primaryEndpoints.blob' )
-          installKitUri=${{ env.storageContainerName }}/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip?$sasToken
+          installKitUri=$blobEndpoint${{ env.storageContainerName }}/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip?$sasToken
 
           #parameters JSON
           parametersJson=$( cat ./parameters.json | jq '.parameters' )
