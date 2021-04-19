@@ -28,6 +28,7 @@ env:
   storageResourceGroup: zheng-test-rg
   storageAccountName: ${{ secrets.STORAGE_ACCOUNT_NAME }}
   storageContainerName: ${{ secrets.INSTALLER_CONTAINER_NAME }}
+  vhdStorageAccountName: storage${{ github.run_id }}${{ github.run_number }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -86,7 +87,7 @@ jobs:
           #parameters JSON
           parametersJson=$( cat ./parameters.json | jq '.parameters' )
           parametersJson=$( echo "$parametersJson" | jq --arg uri "$installKitUri" '{"installKitUri": {"value":$uri}} + .' )
-          parametersJson=$( echo "$parametersJson" | jq --arg storageAccount "${{ env.storageAccountName }}" '{"storageAccount": {"value":$storageAccount}} + .' )
+          parametersJson=$( echo "$parametersJson" | jq --arg storageAccount "${{ env.vhdStorageAccountName }}" '{"storageAccount": {"value":$storageAccount}} + .' )
           parametersJson=$( echo "$parametersJson" | jq -c '.' )
 
           echo $parametersJson
