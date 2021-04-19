@@ -26,8 +26,8 @@ env:
   vmAdminPassword: Secret123456
   vmImageName: wasImage${{ github.run_id }}${{ github.run_number }}
   storageResourceGroup: zheng-test-rg
-  storageAccountName: stagevhekpiwmxfyjjqoocjb
-  storageContainerName: zheng-test-rg-stageartifacts
+  storageAccountName: ${{ secrets.STORAGE_ACCOUNT_NAME }}
+  storageContainerName: ${{ secrets.INSTALLER_CONTAINER_NAME }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -73,7 +73,6 @@ jobs:
 
           #Get a 4-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
           plusFourHoursUtc=$(date -u -v+4H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plusFourHoursUtc=$(date -u --date "$dte 4 hour" +%Y-%m-%dT%H:%MZ)
-          echo "$plusFourHoursUtc"
 
           #Generate SAS token
           sasToken=$( az storage container generate-sas -n ${{ env.storageContainerName }} --permissions r --expiry "$plusFourHoursUtc" --account-name ${{ env.storageAccountName }} --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} -o json | sed 's/"//g')
@@ -87,7 +86,7 @@ jobs:
           #parameters JSON
           parametersJson=$( cat ./parameters.json | jq '.parameters' )
           parametersJson=$( echo "$parametersJson" | jq --arg uri "$installKitUri" '{"installKitUri": {"value":$uri}} + .' )
-          parametersJson=$( echo "$parametersJson" | jq --arg storagteAccount "${{ env.storageAccountName }}" '{"storagteAccount": {"value":$storagteAccount}} + .' )
+          parametersJson=$( echo "$parametersJson" | jq --arg storageAccount "${{ env.storageAccountName }}" '{"storageAccount": {"value":$storageAccount}} + .' )
           parametersJson=$( echo "$parametersJson" | jq -c '.' )
 
           echo $parametersJson
