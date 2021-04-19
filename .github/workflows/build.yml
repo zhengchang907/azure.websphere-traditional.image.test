@@ -25,7 +25,7 @@ env:
   vmAdminId: websphere
   vmAdminPassword: Secret123456
   vmImageName: wasImage${{ github.run_id }}${{ github.run_number }}
-  storagteResourceGroup: zheng-test-rg
+  storageResourceGroup: zheng-test-rg
   storageAccountName: stagevhekpiwmxfyjjqoocjb
   storageContainerName: zheng-test-rg-stageartifacts
 
@@ -73,20 +73,21 @@ jobs:
 
           #Get a 4-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
           plusFourHoursUtc=$(date -u -v+4H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plusFourHoursUtc=$(date -u --date "$dte 4 hour" +%Y-%m-%dT%H:%MZ)
+          echo "$plusFourHoursUtc"
 
           #Generate SAS token
           sasToken=$( az storage container generate-sas -n ${{ env.storageContainerName }} --permissions r --expiry "$plusFourHoursUtc" --account-name ${{ env.storageAccountName }} --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} -o json | sed 's/"//g')
-          blobEndpoint=$( az storage account show -n ${{ env.storageAccountName }} -g ${{ env.storagteResourceGroup }} -o json | jq -r '.primaryEndpoints.blob' )
+          blobEndpoint=$( az storage account show -n ${{ env.storageAccountName }} -g ${{ env.storageResourceGroup }} -o json | jq -r '.primaryEndpoints.blob' )
           echo $blobEndpoint
 
           installKitUri=${blobEndpoint}${{ env.storageContainerName }}/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip?$sasToken
           
           echo $installKitUri
 
-
           #parameters JSON
           parametersJson=$( cat ./parameters.json | jq '.parameters' )
           parametersJson=$( echo "$parametersJson" | jq --arg uri "$installKitUri" '{"installKitUri": {"value":$uri}} + .' )
+          parametersJson=$( echo "$parametersJson" | jq --arg storagteAccount "${{ env.storageAccountName }}" '{"storagteAccount": {"value":$storagteAccount}} + .' )
           parametersJson=$( echo "$parametersJson" | jq -c '.' )
 
           echo $parametersJson
@@ -94,7 +95,7 @@ jobs:
           #Start deployment
           echo "Starting deployment..."
           (
-            az deployment group create --name ${{ github.run_id }}${{ github.run_number }} --resource-group ${{ env.storagteResourceGroup }} \
+            az deployment group create --name ${{ github.run_id }}${{ github.run_number }} --resource-group ${{ env.storageResourceGroup }} \
               --template-file ./mainTemplate.json --parameters "$parametersJson"
           )
 
@@ -103,8 +104,17 @@ jobs:
           fi
       - name: Generate VM Image
         run: |
-          az vm deallocate --resource-group ${{ env.storagteResourceGroup }} --name ${{ env.vmName }}
-          az vm generalize --resource-group ${{ env.storagteResourceGroup }} --name ${{ env.vmName }}
-          az image create --resource-group ${{ env.storagteResourceGroup }} --name ${{ env.vmImageName }} --source ${{ env.vmName }}
+          az vm deallocate --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
+          az vm generalize --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
+          az image create --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmImageName }} --source ${{ env.vmName }}
+      - name: Generate SAS
+        run: |
+          #Get a minus-24-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
+          minus24HoursUtc=$(date -u -v-24H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || minus24HoursUtc=$(date -u --date "$dte -24 hour" +%Y-%m-%dT%H:%MZ)
 
+          #Get a plus-24-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
+          plus24HoursUtc=$(date -u -v+24H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plus24HoursUtc=$(date -u --date "$dte 24 hour" +%Y-%m-%dT%H:%MZ)
+
+          sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.storageAccountName }};AccountKey=${{ secrets.STORAGE_ACCOUNT_KEY }};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start '$minus24HoursUtc' --expiry '$plus24HoursUtc')
+          echo "::set-output name=sasTokenForOffer::$sasTokenForOffer"
     
