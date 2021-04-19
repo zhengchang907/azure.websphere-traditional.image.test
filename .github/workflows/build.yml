@@ -131,6 +131,15 @@ jobs:
           az vm deallocate --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
           az vm generalize --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
           az image create --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmImageName }} --source ${{ env.vmName }}
+      - name: Query vhd storage account access key
+        id: query-vhd-access-key
+        run: |
+          key1=$(az storage account keys list --account-name ${{ env.vhdStorageAccountName }} --query "[?keyName=='key1'].value" -o tsv)
+          echo $key1
+          echo "##[set-output name=key1;]${key1}"
+      - name: Create environment variable for vhd storage account access key
+        id: env-vhd-access-key
+        run: echo "vhdStorageAccountAccessKey=${{steps.query-vhd-access-key.key1}}" >> $GITHUB_ENV
       - name: Generate SAS
         run: |
           #Get a minus-24-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
@@ -139,6 +148,6 @@ jobs:
           #Get a plus-24-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
           plus24HoursUtc=$(date -u -v+24H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plus24HoursUtc=$(date -u --date "$dte 24 hour" +%Y-%m-%dT%H:%MZ)
 
-          sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.storageAccountName }};AccountKey=${{ secrets.STORAGE_ACCOUNT_KEY }};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start '$minus24HoursUtc' --expiry '$plus24HoursUtc')
+          sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start '$minus24HoursUtc' --expiry '$plus24HoursUtc')
           echo "::set-output name=sasTokenForOffer::$sasTokenForOffer"
     
