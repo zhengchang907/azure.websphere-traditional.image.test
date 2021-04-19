@@ -21,10 +21,6 @@
             "defaultValue": "Standard_D2_v3",
             "type": "string"
         },
-        "osDiskType": {
-            "defaultValue": "Standard_LRS",
-            "type": "string"
-        },
         "addressPrefix": {
             "defaultValue": "10.0.0.0/16",
             "type": "string"
@@ -76,7 +72,6 @@
         "ref_networkInterface": "[resourceId('Microsoft.Network/networkInterfaces', variables('name_networkInterface'))]",
         "ref_networkSecurityGroup": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('name_networkSecurityGroup'))]",
         "ref_publicIPAddress": "[resourceId('Microsoft.Network/publicIPAddresses', variables('name_publicIPAddress'))]",
-        "ref_storage": "[resourceId('Microsoft.Storage/storageAccounts', variables('name_storageAccount'))]",
         "ref_subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('name_virtualNetwork'), parameters('subnetName'))]",
         "ref_virtualMachine": "[resourceId('Microsoft.Compute/virtualMachines', variables('name_virtualMachine'))]",
         "ref_virtualNetwork": "[resourceId('Microsoft.Network/virtualNetworks', variables('name_virtualNetwork'))]"
@@ -182,24 +177,12 @@
             }
         },
         {
-            "name": "[variables('name_storageAccount')]",
-            "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2019-06-01",
-            "location": "[parameters('location')]",
-            "properties": {},
-            "kind": "Storage",
-            "sku": {
-                "name": "[parameters('osDiskType')]"
-            }
-        },
-        {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-03-01",
             "name": "[variables('name_virtualMachine')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[variables('ref_networkInterface')]",
-                "[variables('ref_storage')]"
+                "[variables('ref_networkInterface')]"
             ],
             "tags": {
                 "SkipGreenTeamLinuxSSHAuthForResource": true
@@ -219,7 +202,7 @@
                         "name": "[concat(variables('name_virtualMachine'), '-disk')]",
                         "createOption": "FromImage",
                         "vhd": {
-                            "uri": "[concat(reference(variables('name_storageAccount')).primaryEndpoints.blob, 'vhds/', variables('name_virtualMachine'), '.vhd')]"
+                            "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('name_storageAccount')), '2019-06-01').primaryEndpoints.blob, 'vhds/', variables('name_virtualMachine'), '.vhd')]"
                         }
                     }
                 },

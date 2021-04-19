@@ -101,6 +101,30 @@ jobs:
           if [[ $? -eq 0 ]]; then
             echo "Template has been successfully deployed"
           fi
+      - name: Query public IP of VM
+        id: query-vm-ip
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "query public ip"
+            publicIP=$(az vm show \
+              --resource-group $resourceGroup \
+              --name${{ env.vmName }} -d \
+              --query publicIps -o tsv)
+            echo "##[set-output name=publicIP;]${publicIP}"
+      - name: Create environment variable for VM
+        id: env-vm-ip
+        run: echo "wlsPublicIP=${{steps.query-vm-ip.outputs.publicIP}}" >> $GITHUB_ENV
+      - name: Deprovision
+        run: |
+          echo "pubilc IP of VM: ${wlsPublicIP}"
+          echo "Deprovision starts"
+          timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${wlsPublicIP} 22
+          echo install sshpass
+          sudo apt-get install -y sshpass
+          sshpass -p ${{ env.vmAdminPassword }} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt ${{ secrets.USER_NAME }}@${wlsPublicIP} 'bash -s' < azure.websphere-traditional.image/test/scripts/deprovision.sh
+
       - name: Generate VM Image
         run: |
           az vm deallocate --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
