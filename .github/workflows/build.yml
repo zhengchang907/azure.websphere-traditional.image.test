@@ -125,10 +125,9 @@ jobs:
         run: |
           echo "pubilc IP of VM: ${wlsPublicIP}"
           echo "Deprovision starts"
-          # echo install sshpass
-          # sudo apt-get install -y sshpass
-          # sshpass -p ${{ env.vmAdminPassword }} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=60 -v -tt ${{ env.vmAdminId }}@${wlsPublicIP} 'bash -s' < azure.websphere-traditional.image/test/scripts/deprovision.sh
-          ssh ${{ env.vmAdminId }}@${wlsPublicIP} 'bash -s' < azure.websphere-traditional.image/test/scripts/deprovision.sh
+          echo install sshpass
+          sudo apt-get install -y sshpass
+          sshpass -p ${{ env.vmAdminPassword }} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=60 -v -tt ${{ env.vmAdminId }}@${wlsPublicIP} 'bash -s' < azure.websphere-traditional.image/test/scripts/deprovision.sh
 
       - name: Generate VM Image
         run: |
