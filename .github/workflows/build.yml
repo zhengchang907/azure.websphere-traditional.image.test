@@ -127,6 +127,10 @@ jobs:
             az vm user reset-ssh \
               --resource-group ${{ env.storageResourceGroup }} \
               --name ${{ env.vmName }}
+      - name: Prepare deprovision script
+        run: |
+          sed -i "s/#vmAdminPassword#/${{ env.vmAdminPassword }}/g" \
+          azure.websphere-traditional.image/test/scripts/deprovision.sh
       - name: Deprovision
         run: |
           echo "pubilc IP of VM: ${wlsPublicIP}"
