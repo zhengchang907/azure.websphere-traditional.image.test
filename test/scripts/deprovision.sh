@@ -1,4 +1,4 @@
 sudo -S waagent -deprovision+user -force << EOF
-"#vmAdminPassword#"
+#vmAdminPassword#
 EOF
 exit
