@@ -117,16 +117,6 @@ jobs:
       - name: Create environment variable for VM
         id: env-vm-ip
         run: echo "wlsPublicIP=${{steps.query-vm-ip.outputs.publicIP}}" >> $GITHUB_ENV
-      # Fix failure that caused by remote server closed.
-      - name: Restart remote SSH agent
-        uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            echo "Restart remote SSH agent"
-            az vm user reset-ssh \
-              --resource-group ${{ env.storageResourceGroup }} \
-              --name ${{ env.vmName }}
       - name: Prepare deprovision script
         run: |
           sed -i "s/#vmAdminPassword#/${{ env.vmAdminPassword }}/g" \
