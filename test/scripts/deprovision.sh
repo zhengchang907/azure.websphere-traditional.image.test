@@ -1,4 +1,2 @@
-#!/bin/bash
-# Deprovision right away
-echo "#vmAdminPassword#" | sudo -S waagent -deprovision+user -force
-exit 0
+echo "Cz211807" | sudo -S [ waagent -deprovision+user -force ] && exit 0
+exit 1
