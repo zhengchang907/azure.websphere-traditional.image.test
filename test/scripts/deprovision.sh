@@ -1,4 +1,4 @@
 #!/bin/bash
 # Deprovision right away
-waagent -deprovision+user -force
+sudo waagent -deprovision+user -force
 exit 0
