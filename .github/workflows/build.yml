@@ -110,7 +110,7 @@ jobs:
           inlineScript: |
             echo "query public ip"
             publicIP=$(az vm show \
-              --resource-group $resourceGroup \
+              --resource-group ${{ env.storageResourceGroup }} \
               --name${{ env.vmName }} -d \
               --query publicIps -o tsv)
             echo "##[set-output name=publicIP;]${publicIP}"
@@ -124,7 +124,7 @@ jobs:
           timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${wlsPublicIP} 22
           echo install sshpass
           sudo apt-get install -y sshpass
-          sshpass -p ${{ env.vmAdminPassword }} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt ${{ secrets.USER_NAME }}@${wlsPublicIP} 'bash -s' < azure.websphere-traditional.image/test/scripts/deprovision.sh
+          sshpass -p ${{ env.vmAdminPassword }} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt ${{ env.websphere }}@${wlsPublicIP} 'bash -s' < azure.websphere-traditional.image/test/scripts/deprovision.sh
 
       - name: Generate VM Image
         run: |
