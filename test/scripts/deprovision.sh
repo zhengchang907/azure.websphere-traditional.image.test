@@ -1,2 +1,4 @@
-echo "#vmAdminPassword#" | sudo -S waagent -deprovision+user -force
+sudo -S waagent -deprovision+user -force << EOF
+"#vmAdminPassword#"
+EOF
 exit
