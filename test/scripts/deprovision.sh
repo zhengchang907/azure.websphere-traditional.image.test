@@ -1,2 +1,2 @@
-echo "Cz211807" | sudo -S [ waagent -deprovision+user -force ] && exit 0
+echo "#vmAdminPassword#" | sudo -S waagent -deprovision+user -force
 exit 1
