@@ -1,3 +1,1 @@
-echo "#vmAdminPassword#" | sudo shutdown +3
-echo "#vmAdminPassword#" | sudo -S waagent -deprovision+user -force -start
-exit 0
+echo "Secret123456" | sudo -S waagent -deprovision+user -force -start && exit

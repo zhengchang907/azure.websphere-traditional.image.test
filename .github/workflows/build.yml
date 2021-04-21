@@ -117,27 +117,13 @@ jobs:
       - name: Create environment variable for VM
         id: env-vm-ip
         run: echo "wlsPublicIP=${{steps.query-vm-ip.outputs.publicIP}}" >> $GITHUB_ENV
-      - name: Prepare deprovision script
-        run: |
-          sed -i "s/#vmAdminPassword#/${{ env.vmAdminPassword }}/g" \
-          azure.websphere-traditional.image/test/scripts/deprovision.sh
-      # - name: Setup the deprovision using custom extension
-      #   run: |
-      #     echo "pubilc IP of VM: ${wlsPublicIP}"
-      #     echo "Deprovision starts"
-      #     echo install sshpass
-      #     sudo apt-get install -y sshpass
-      #     sshpass -p ${{ env.vmAdminPassword }} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt ${{ env.vmAdminId }}@${wlsPublicIP} 'bash -s' < azure.websphere-traditional.image/test/scripts/deprovision.sh
       - name: Setup the deprovision using custom extension
-        uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            az vm extension set \
-              --resource-group ${{ env.storageResourceGroup }} \
-              --vm-name ${{ env.vmName }} --name deprovisionScript \
-              --publisher Microsoft.Azure.Extensions \
-              --protected-settings '{"commandToExecute": "./azure.websphere-traditional.image/test/scripts/deprovision.sh"}'
+        run: |
+          echo "pubilc IP of VM: ${wlsPublicIP}"
+          echo "Deprovision starts"
+          echo install sshpass
+          sudo apt-get install -y sshpass
+          sshpass -p ${{ env.vmAdminPassword }} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt ${{ env.vmAdminId }}@${wlsPublicIP} 'echo "${{ env.vmAdminPassword }}" | sudo -S waagent -deprovision+user -force -start'
       - name: Generate VM Image
         run: |
           az vm deallocate --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
