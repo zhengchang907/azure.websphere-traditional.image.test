@@ -121,14 +121,21 @@ jobs:
         run: |
           sed -i "s/#vmAdminPassword#/${{ env.vmAdminPassword }}/g" \
           azure.websphere-traditional.image/test/scripts/deprovision.sh
-      - name: Deprovision
+      - name: Setup the deprovision
         run: |
           echo "pubilc IP of VM: ${wlsPublicIP}"
           echo "Deprovision starts"
           echo install sshpass
           sudo apt-get install -y sshpass
           sshpass -p ${{ env.vmAdminPassword }} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt ${{ env.vmAdminId }}@${wlsPublicIP} 'bash -s' < azure.websphere-traditional.image/test/scripts/deprovision.sh
-
+      - name: Restart VM
+        id: restart-wm
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "restart vm to make sure deprovision gets called"
+            az vm restart -g ${{ env.storageResourceGroup }} -n ${{ env.vmName }}
       - name: Generate VM Image
         run: |
           az vm deallocate --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
