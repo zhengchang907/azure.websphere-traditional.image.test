@@ -155,7 +155,7 @@ jobs:
           sasUri=$blobStorageEndpoint/vhds/${{ env.vmName }}/$sasTokenForOffer
           echo "::set-output name=sasUri::$sasUri"
       - name: Create environment variable for VM SAS uri
-        id: env-vm-ip
+        id: env-vm-sas-uri
         run: echo "vmSasUri=${{steps.generate-sas-uri.sasUri}}" >> $GITHUB_ENV
       - name: Deploy VM using image
         run: |
