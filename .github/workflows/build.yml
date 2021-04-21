@@ -146,7 +146,7 @@ jobs:
           #Get a plus-24-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
           plus24HoursUtc=$(date -u -v+24H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plus24HoursUtc=$(date -u --date "$dte 24 hour" +%Y-%m-%dT%H:%MZ)
 
-          sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start $minus24HoursUtc --expiry $plus24HoursUtc -o tsv)
+          sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start "${minus24HoursUtc}" --expiry "${plus24HoursUtc}" -o tsv)
           echo "::set-output name=sasTokenForOffer::$sasTokenForOffer"
 
           blobStorageEndpoint=$(az storage account show --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vhdStorageAccountName }} --query primaryEndpoints.blob -o tsv)
