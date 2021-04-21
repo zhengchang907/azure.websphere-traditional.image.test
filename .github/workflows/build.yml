@@ -24,7 +24,6 @@ env:
   vmName: was${{ github.run_id }}${{ github.run_number }}
   vmAdminId: websphere
   vmAdminPassword: Secret123456
-  vmImageName: wasImage${{ github.run_id }}${{ github.run_number }}
   storageResourceGroup: zheng-test-rg
   storageAccountName: ${{ secrets.STORAGE_ACCOUNT_NAME }}
   storageContainerName: ${{ secrets.INSTALLER_CONTAINER_NAME }}
@@ -128,7 +127,7 @@ jobs:
         run: |
           az vm deallocate --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
           az vm generalize --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
-          az image create --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmImageName }} --source ${{ env.vmName }}
+          az image create --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }} --source ${{ env.vmName }}
       - name: Query vhd storage account access key
         id: query-vhd-access-key
         run: |
@@ -139,6 +138,7 @@ jobs:
         id: env-vhd-access-key
         run: echo "vhdStorageAccountAccessKey=${{steps.query-vhd-access-key.key1}}" >> $GITHUB_ENV
       - name: Generate SAS
+        id: generate-sas-uri
         run: |
           #Get a minus-24-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
           minus24HoursUtc=$(date -u -v-24H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || minus24HoursUtc=$(date -u --date "$dte -24 hour" +%Y-%m-%dT%H:%MZ)
@@ -146,6 +146,21 @@ jobs:
           #Get a plus-24-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
           plus24HoursUtc=$(date -u -v+24H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plus24HoursUtc=$(date -u --date "$dte 24 hour" +%Y-%m-%dT%H:%MZ)
 
-          sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start '$minus24HoursUtc' --expiry '$plus24HoursUtc')
+          sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start $minus24HoursUtc --expiry $plus24HoursUtc -o tsv)
           echo "::set-output name=sasTokenForOffer::$sasTokenForOffer"
-    
+
+          blobStorageEndpoint=$(az storage account show --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vhdStorageAccountName }} --query primaryEndpoints.blob -o tsv)
+          echo "::set-output name=blobStorageEndpoint::$blobStorageEndpoint"
+
+          sasUri=$blobStorageEndpoint/vhds/${{ env.vmName }}/$sasTokenForOffer
+          echo "::set-output name=sasUri::$sasUri"
+      - name: Create environment variable for VM SAS uri
+        id: env-vm-ip
+        run: echo "vmSasUri=${{steps.generate-sas-uri.sasUri}}" >> $GITHUB_ENV
+      - name: Deploy VM using image
+        run: |
+          az vm create --resource-group ${{ env.storageResourceGroup }} \
+              --name targetVM \
+              --image ${vmSasUri} \
+              --specialized
+              
