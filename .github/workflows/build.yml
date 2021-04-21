@@ -147,12 +147,14 @@ jobs:
           plus24HoursUtc=$(date -u -v+24H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plus24HoursUtc=$(date -u --date "$dte 24 hour" +%Y-%m-%dT%H:%MZ)
 
           sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start "${minus24HoursUtc}" --expiry "${plus24HoursUtc}" -o tsv)
-          echo "::set-output name=sasTokenForOffer::$sasTokenForOffer"
+          echo $sasTokenForOffer
 
           blobStorageEndpoint=$(az storage account show --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vhdStorageAccountName }} --query primaryEndpoints.blob -o tsv)
-          echo "::set-output name=blobStorageEndpoint::$blobStorageEndpoint"
+          echo $blobStorageEndpoint
 
-          sasUri=$blobStorageEndpoint/vhds/${{ env.vmName }}/$sasTokenForOffer
+          sasUri=$blobStorageEndpoint/vhds/${{ env.vmName }}.vhd?$sasTokenForOffer
+          sasUri=$(echo ${sasUri} | sed 's,\/\/,\/,g')
+          echo $sasUri
           echo "::set-output name=sasUri::$sasUri"
       - name: Create environment variable for VM SAS uri
         id: env-vm-sas-uri
