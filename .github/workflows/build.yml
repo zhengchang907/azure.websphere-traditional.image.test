@@ -174,11 +174,9 @@ jobs:
           echo $sasTokenForOffer
 
           blobStorageEndpoint=$(az storage account show --resource-group azure-websphere-image-rg --name storage77337016771 --query primaryEndpoints.blob)
-          #Remove last slash
-          blobStorageEndpoint=${blobStorageEndpoint::-1}
           echo $blobStorageEndpoint
 
-          sasUri=$blobStorageEndpoint/vhds/was77337016771.vhd?$sasTokenForOffer
+          sasUri=${blobStorageEndpoint}vhds/was77337016771.vhd?$sasTokenForOffer
           echo $sasUri
           echo "::set-output name=sasUri::$sasUri"
       - name: Create environment variable for VM SAS uri
