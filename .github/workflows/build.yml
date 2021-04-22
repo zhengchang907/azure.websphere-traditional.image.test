@@ -173,7 +173,7 @@ jobs:
           sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=storage77337016771;AccountKey=${{ secrets.TEMP_STORAGE_KEY }};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start "${minus24HoursUtc}" --expiry "${plus24HoursUtc}" -o tsv)
           echo $sasTokenForOffer
 
-          blobStorageEndpoint=$(az storage account show --resource-group azure-websphere-image-rg --namestorage77337016771 --query primaryEndpoints.blob)
+          blobStorageEndpoint=$(az storage account show --resource-group azure-websphere-image-rg --name storage77337016771 --query primaryEndpoints.blob)
           #Remove last slash
           blobStorageEndpoint=${blobStorageEndpoint::-1}
           echo $blobStorageEndpoint
