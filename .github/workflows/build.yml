@@ -67,76 +67,98 @@ jobs:
         id: azure-login
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Run deployment script
-        run: |
-          cd ${{ env.offerName }}/target/arm
+      # - name: Run deployment script
+      #   run: |
+      #     cd ${{ env.offerName }}/target/arm
 
-          #Get a 4-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
-          plusFourHoursUtc=$(date -u -v+4H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plusFourHoursUtc=$(date -u --date "$dte 4 hour" +%Y-%m-%dT%H:%MZ)
+      #     #Get a 4-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
+      #     plusFourHoursUtc=$(date -u -v+4H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plusFourHoursUtc=$(date -u --date "$dte 4 hour" +%Y-%m-%dT%H:%MZ)
 
-          #Generate SAS token
-          sasToken=$( az storage container generate-sas -n ${{ env.storageContainerName }} --permissions r --expiry "$plusFourHoursUtc" --account-name ${{ env.storageAccountName }} --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} -o json | sed 's/"//g')
-          blobEndpoint=$( az storage account show -n ${{ env.storageAccountName }} -g ${{ env.storageResourceGroup }} -o json | jq -r '.primaryEndpoints.blob' )
-          echo $blobEndpoint
+      #     #Generate SAS token
+      #     sasToken=$( az storage container generate-sas -n ${{ env.storageContainerName }} --permissions r --expiry "$plusFourHoursUtc" --account-name ${{ env.storageAccountName }} --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} -o json | sed 's/"//g')
+      #     blobEndpoint=$( az storage account show -n ${{ env.storageAccountName }} -g ${{ env.storageResourceGroup }} -o json | jq -r '.primaryEndpoints.blob' )
+      #     echo $blobEndpoint
 
-          installKitUri=${blobEndpoint}${{ env.storageContainerName }}/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip?$sasToken
+      #     installKitUri=${blobEndpoint}${{ env.storageContainerName }}/agent.installer.linux.gtk.x86_64_1.9.0.20190715_0328.zip?$sasToken
           
-          echo $installKitUri
+      #     echo $installKitUri
 
-          #parameters JSON
-          parametersJson=$( cat ./parameters.json | jq '.parameters' )
-          parametersJson=$( echo "$parametersJson" | jq --arg uri "$installKitUri" '{"installKitUri": {"value":$uri}} + .' )
-          parametersJson=$( echo "$parametersJson" | jq --arg storageAccount "${{ env.vhdStorageAccountName }}" '{"storageAccount": {"value":$storageAccount}} + .' )
-          parametersJson=$( echo "$parametersJson" | jq -c '.' )
+      #     #parameters JSON
+      #     parametersJson=$( cat ./parameters.json | jq '.parameters' )
+      #     parametersJson=$( echo "$parametersJson" | jq --arg uri "$installKitUri" '{"installKitUri": {"value":$uri}} + .' )
+      #     parametersJson=$( echo "$parametersJson" | jq --arg storageAccount "${{ env.vhdStorageAccountName }}" '{"storageAccount": {"value":$storageAccount}} + .' )
+      #     parametersJson=$( echo "$parametersJson" | jq -c '.' )
 
-          echo $parametersJson
+      #     echo $parametersJson
 
-          #Start deployment
-          echo "Starting deployment..."
-          (
-            az deployment group create --name ${{ github.run_id }}${{ github.run_number }} --resource-group ${{ env.storageResourceGroup }} \
-              --template-file ./mainTemplate.json --parameters "$parametersJson"
-          )
+      #     #Start deployment
+      #     echo "Starting deployment..."
+      #     (
+      #       az deployment group create --name ${{ github.run_id }}${{ github.run_number }} --resource-group ${{ env.storageResourceGroup }} \
+      #         --template-file ./mainTemplate.json --parameters "$parametersJson"
+      #     )
 
-          if [[ $? -eq 0 ]]; then
-            echo "Template has been successfully deployed"
-          fi
-      - name: Query public IP of VM
-        id: query-vm-ip
-        uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            echo "query public ip"
-            publicIP=$(az vm show \
-              --resource-group ${{ env.storageResourceGroup }} \
-              --name ${{ env.vmName }} -d \
-              --query publicIps -o tsv)
-            echo "##[set-output name=publicIP;]${publicIP}"
-      - name: Create environment variable for VM
-        id: env-vm-ip
-        run: echo "wlsPublicIP=${{steps.query-vm-ip.outputs.publicIP}}" >> $GITHUB_ENV
-      - name: Setup the deprovision using custom extension
-        run: |
-          echo "pubilc IP of VM: ${wlsPublicIP}"
-          echo "Deprovision starts"
-          echo install sshpass
-          sudo apt-get install -y sshpass
-          sshpass -p ${{ env.vmAdminPassword }} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt ${{ env.vmAdminId }}@${wlsPublicIP} 'echo "${{ env.vmAdminPassword }}" | sudo -S waagent -deprovision+user -force -start'
-      - name: Generate VM Image
-        run: |
-          az vm deallocate --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
-          az vm generalize --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
-          az image create --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }} --source ${{ env.vmName }}
-      - name: Query vhd storage account access key
-        id: query-vhd-access-key
-        run: |
-          key1=$(az storage account keys list --account-name ${{ env.vhdStorageAccountName }} --query "[?keyName=='key1'].value" -o tsv)
-          echo $key1
-          echo "##[set-output name=key1;]${key1}"
-      - name: Create environment variable for vhd storage account access key
-        id: env-vhd-access-key
-        run: echo "vhdStorageAccountAccessKey=${{steps.query-vhd-access-key.key1}}" >> $GITHUB_ENV
+      #     if [[ $? -eq 0 ]]; then
+      #       echo "Template has been successfully deployed"
+      #     fi
+      # - name: Query public IP of VM
+      #   id: query-vm-ip
+      #   uses: azure/CLI@v1
+      #   with:
+      #     azcliversion: ${{ env.azCliVersion }}
+      #     inlineScript: |
+      #       echo "query public ip"
+      #       publicIP=$(az vm show \
+      #         --resource-group ${{ env.storageResourceGroup }} \
+      #         --name ${{ env.vmName }} -d \
+      #         --query publicIps -o tsv)
+      #       echo "##[set-output name=publicIP;]${publicIP}"
+      # - name: Create environment variable for VM
+      #   id: env-vm-ip
+      #   run: echo "wlsPublicIP=${{steps.query-vm-ip.outputs.publicIP}}" >> $GITHUB_ENV
+      # - name: Setup the deprovision using custom extension
+      #   run: |
+      #     echo "pubilc IP of VM: ${wlsPublicIP}"
+      #     echo "Deprovision starts"
+      #     echo install sshpass
+      #     sudo apt-get install -y sshpass
+      #     sshpass -p ${{ env.vmAdminPassword }} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt ${{ env.vmAdminId }}@${wlsPublicIP} 'echo "${{ env.vmAdminPassword }}" | sudo -S waagent -deprovision+user -force -start'
+      # - name: Generate VM Image
+      #   run: |
+      #     az vm deallocate --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
+      #     az vm generalize --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }}
+      #     az image create --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vmName }} --source ${{ env.vmName }}
+      # - name: Query vhd storage account access key
+      #   id: query-vhd-access-key
+      #   run: |
+      #     key1=$(az storage account keys list --account-name ${{ env.vhdStorageAccountName }} --query "[?keyName=='key1'].value" -o tsv)
+      #     echo $key1
+      #     echo "##[set-output name=key1;]${key1}"
+      # - name: Create environment variable for vhd storage account access key
+      #   id: env-vhd-access-key
+      #   run: echo "vhdStorageAccountAccessKey=${{steps.query-vhd-access-key.key1}}" >> $GITHUB_ENV
+      # - name: Generate SAS
+      #   id: generate-sas-uri
+      #   run: |
+      #     #Get a minus-24-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
+      #     minus24HoursUtc=$(date -u --date "$dte -24 hour" +%Y-%m-%dT%H:%MZ)
+      #     echo $minus24HoursUtc
+
+      #     #Get a plus-24-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
+      #     plus24HoursUtc=$(date -u --date "$dte 24 hour" +%Y-%m-%dT%H:%MZ)
+      #     echo $plus24HoursUtc
+
+      #     sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start "${minus24HoursUtc}" --expiry "${plus24HoursUtc}" -o tsv)
+      #     echo $sasTokenForOffer
+
+      #     blobStorageEndpoint=$(az storage account show --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vhdStorageAccountName }} --query primaryEndpoints.blob)
+      #     #Remove last slash
+      #     blobStorageEndpoint=${blobStorageEndpoint::-1}
+      #     echo $blobStorageEndpoint
+
+      #     sasUri=$blobStorageEndpoint/vhds/${{ env.vmName }}.vhd?$sasTokenForOffer
+      #     echo $sasUri
+      #     echo "::set-output name=sasUri::$sasUri"
       - name: Generate SAS
         id: generate-sas-uri
         run: |
@@ -148,15 +170,15 @@ jobs:
           plus24HoursUtc=$(date -u --date "$dte 24 hour" +%Y-%m-%dT%H:%MZ)
           echo $plus24HoursUtc
 
-          sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start "${minus24HoursUtc}" --expiry "${plus24HoursUtc}" -o tsv)
+          sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=storage77337016771;AccountKey=${{ secrets.TEMP_STORAGE_KEY }};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start "${minus24HoursUtc}" --expiry "${plus24HoursUtc}" -o tsv)
           echo $sasTokenForOffer
 
-          blobStorageEndpoint=$(az storage account show --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vhdStorageAccountName }} --query primaryEndpoints.blob)
+          blobStorageEndpoint=$(az storage account show --resource-group azure-websphere-image-rg --namestorage77337016771 --query primaryEndpoints.blob)
           #Remove last slash
           blobStorageEndpoint=${blobStorageEndpoint::-1}
           echo $blobStorageEndpoint
 
-          sasUri=$blobStorageEndpoint/vhds/${{ env.vmName }}.vhd?$sasTokenForOffer
+          sasUri=$blobStorageEndpoint/vhds/was77337016771.vhd?$sasTokenForOffer
           echo $sasUri
           echo "::set-output name=sasUri::$sasUri"
       - name: Create environment variable for VM SAS uri
