@@ -18,23 +18,15 @@
             "defaultValue": "",
             "type": "securestring"
         },
-        "osType": {
-            "type": "string",
-            "allowedValues": [
-                "Windows",
-                "Linux"
-            ],
-            "defaultValue": "Linux",
-            "metadata": {
-                "description": "Type of OS on the existing vhd"
-            }
-        },
         "imageResourceId": {
             "defaultValue": "",
             "type": "string"
         },
         "vmSize": {
             "defaultValue": "Standard_D2_v3",
+            "type": "string"
+        },
+        "vmName": {
             "type": "string"
         },
         "addressPrefix": {
@@ -65,7 +57,7 @@
         "name_networkInterface": "[concat(variables('name_virtualMachine'), '-if')]",
         "name_networkSecurityGroup": "[concat(variables('const_dnsLabelPrefix'), '-nsg')]",
         "name_publicIPAddress": "[concat(variables('name_virtualMachine'), '-ip')]",
-        "name_virtualMachine": "[concat('wasVM', take(replace(parameters('guidValue'),'-',''),6))]",
+        "name_virtualMachine": "[parameters('vmName')]",
         "name_virtualNetwork": "[concat(variables('const_dnsLabelPrefix'), '-vnet')]",
         "ref_networkInterface": "[resourceId('Microsoft.Network/networkInterfaces', variables('name_networkInterface'))]",
         "ref_networkSecurityGroup": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('name_networkSecurityGroup'))]",
