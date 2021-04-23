@@ -137,14 +137,14 @@ jobs:
       - name: Create environment variable for vhd storage account access key
         id: env-vhd-access-key
         run: echo "vhdStorageAccountAccessKey=${{steps.query-vhd-access-key.key1}}" >> $GITHUB_ENV
-      - name: Deploy VM using VHD
+      - name: Deploy VM using Image
         run: |
           imageResourceId=$(az image show --name ${{ env.vmName }} --resource-group ${{ env.storageResourceGroup }} --query id -o tsv)
           cd ${{ env.offerName }}/test
           az deployment group create --resource-group ${{ env.storageResourceGroup }} \
               --name targetVM${{ github.run_id }}${{ github.run_number }} \
               --template-file ./mainTemplate.json \
-              --parameters ibmUserId=${{ secrets.IBM_USER_ID }} ibmUserPwd=${{ secrets.IBM_PASSWORD }} vmAdminId=${{ env.vmAdminId }} vmAdminPwd=${{ env.vmAdminPassword }} location=eastus osVhdUri=${osVhdBlobUrl}
+              --parameters ibmUserId=${{ secrets.IBM_USER_ID }} ibmUserPwd=${{ secrets.IBM_PASSWORD }} vmAdminId=${{ env.vmAdminId }} vmAdminPwd=${{ env.vmAdminPassword }} location=eastus imageResourceId=$imageResourceId
       # - name: Generate SAS url
       #   id: generate-sas-blob-url
       #   run: |
