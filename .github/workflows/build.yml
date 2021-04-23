@@ -161,8 +161,8 @@ jobs:
           blobUrl=${blobStorageEndpoint}vhds/${{ env.vmName }}.vhd
           echo $blobUrl
 
-          echo "::set-output name=sasUri::$sasUri"
-          echo "::set-output name=blobUrl::$blobUrl"
+          # echo "##[set-output name=sasUri;]${sasUri}"
+          echo "##[set-output name=blobUrl;]${blobUrl}"
       - name: Create environment variable for vhd blob url
         id: env-vhd-blob-url
         run: |
