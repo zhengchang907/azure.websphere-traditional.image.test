@@ -29,7 +29,7 @@
                 "description": "Type of OS on the existing vhd"
             }
         },
-        "osVhdUri": {
+        "imageResourceId": {
             "defaultValue": "",
             "type": "string"
         },
@@ -67,7 +67,6 @@
         "name_publicIPAddress": "[concat(variables('name_virtualMachine'), '-ip')]",
         "name_virtualMachine": "[concat('wasVM', take(replace(parameters('guidValue'),'-',''),6))]",
         "name_virtualNetwork": "[concat(variables('const_dnsLabelPrefix'), '-vnet')]",
-        "name_image": "[concat(variables('name_virtualMachine'), '-image')]",
         "ref_networkInterface": "[resourceId('Microsoft.Network/networkInterfaces', variables('name_networkInterface'))]",
         "ref_networkSecurityGroup": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('name_networkSecurityGroup'))]",
         "ref_publicIPAddress": "[resourceId('Microsoft.Network/publicIPAddresses', variables('name_publicIPAddress'))]",
@@ -193,30 +192,12 @@
             }
         },
         {
-            "type": "Microsoft.Compute/images",
-            "apiVersion": "2020-06-01",
-            "name": "[variables('name_image')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "storageProfile": {
-                    "osDisk": {
-                        "osType": "[parameters('osType')]",
-                        "osState": "Generalized",
-                        "blobUri": "[parameters('osVhdUri')]",
-                        "storageAccountType": "Standard_LRS"
-                    }
-                },
-                "hyperVGeneration": "V1"
-            }
-        },
-        {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2020-06-01",
             "name": "[variables('name_virtualMachine')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[variables('ref_networkInterface')]",
-                "[variables('name_image')]"
+                "[variables('ref_networkInterface')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -224,7 +205,7 @@
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "id": "[resourceId('Microsoft.Compute/images', variables('name_image'))]"
+                        "id": "[parameters('imageResourceId')]"
                     }
                 },
                 "osProfile": {

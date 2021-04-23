@@ -137,9 +137,17 @@ jobs:
       - name: Create environment variable for vhd storage account access key
         id: env-vhd-access-key
         run: echo "vhdStorageAccountAccessKey=${{steps.query-vhd-access-key.key1}}" >> $GITHUB_ENV
-      - name: Generate SAS and VHD blob url
-        id: generate-sas-blob-url
+      - name: Deploy VM using VHD
         run: |
+          imageResourceId=$(az image show --name ${{ env.vmName }} --resource-group ${{ env.storageResourceGroup }} --query id -o tsv)
+          cd ${{ env.offerName }}/test
+          az deployment group create --resource-group ${{ env.storageResourceGroup }} \
+              --name targetVM${{ github.run_id }}${{ github.run_number }} \
+              --template-file ./mainTemplate.json \
+              --parameters ibmUserId=${{ secrets.IBM_USER_ID }} ibmUserPwd=${{ secrets.IBM_PASSWORD }} vmAdminId=${{ env.vmAdminId }} vmAdminPwd=${{ env.vmAdminPassword }} location=eastus osVhdUri=${osVhdBlobUrl}
+      # - name: Generate SAS url
+      #   id: generate-sas-blob-url
+      #   run: |
           # #Get a minus-24-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
           # minus24HoursUtc=$(date -u --date "$dte -24 hour" +%Y-%m-%dT%H:%MZ)
           # echo $minus24HoursUtc
@@ -151,29 +159,10 @@ jobs:
           # sasTokenForOffer=$(az storage container generate-sas --connection-string "DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net" --name vhds --permissions rl --start "${minus24HoursUtc}" --expiry "${plus24HoursUtc}" -o tsv)
           # echo $sasTokenForOffer
 
-          blobStorageEndpoint=$(az storage account show --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vhdStorageAccountName }} --query primaryEndpoints.blob -o tsv)
-          echo $blobStorageEndpoint
-
           # sasUri=${blobStorageEndpoint}vhds/${{ env.vmName }}.vhd?$sasTokenForOffer
           # echo $sasUri
           # echo "::set-output name=sasUri::$sasUri"
 
-          blobUrl=${blobStorageEndpoint}vhds/${{ env.vmName }}.vhd
-          echo $blobUrl
-
           # echo "##[set-output name=sasUri;]${sasUri}"
-          echo "##[set-output name=blobUrl;]${blobUrl}"
-      - name: Create environment variable for vhd blob url
-        id: env-vhd-blob-url
-        run: |
-          echo "osVhdBlobUrl=${{steps.generate-sas-blob-url.blobUrl}}" >> $GITHUB_ENV
-          echo ${osVhdBlobUrl}
-      - name: Deploy VM using VHD
-        run: |
-          cd ${{ env.offerName }}/test
-          az deployment group create --resource-group ${{ env.storageResourceGroup }} \
-              --name targetVM${{ github.run_id }}${{ github.run_number }} \
-              --template-file ./mainTemplate.json \
-              --parameters ibmUserId=${{ secrets.IBM_USER_ID }} ibmUserPwd=${{ secrets.IBM_PASSWORD }} vmAdminId=${{ env.vmAdminId }} vmAdminPwd=${{ env.vmAdminPassword }} location=eastus osVhdUri="${osVhdBlobUrl}"
           
               
