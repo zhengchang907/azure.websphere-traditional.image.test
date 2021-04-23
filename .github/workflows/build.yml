@@ -148,7 +148,7 @@ jobs:
           # plus24HoursUtc=$(date -u --date "$dte 24 hour" +%Y-%m-%dT%H:%MZ)
           # echo $plus24HoursUtc
 
-          # sasTokenForOffer=$(az storage container generate-sas --connection-string 'DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net' --name vhds --permissions rl --start "${minus24HoursUtc}" --expiry "${plus24HoursUtc}" -o tsv)
+          # sasTokenForOffer=$(az storage container generate-sas --connection-string "DefaultEndpointsProtocol=https;AccountName=${{ env.vhdStorageAccountName }};AccountKey=${vhdStorageAccountAccessKey};EndpointSuffix=core.windows.net" --name vhds --permissions rl --start "${minus24HoursUtc}" --expiry "${plus24HoursUtc}" -o tsv)
           # echo $sasTokenForOffer
 
           blobStorageEndpoint=$(az storage account show --resource-group ${{ env.storageResourceGroup }} --name ${{ env.vhdStorageAccountName }} --query primaryEndpoints.blob -o tsv)
@@ -169,7 +169,7 @@ jobs:
       - name: Deploy VM using VHD
         run: |
           cd ${{ env.offerName }}/test
-          az vm create --resource-group ${{ env.storageResourceGroup }} \
+          az deployment group create --resource-group ${{ env.storageResourceGroup }} \
               --name targetVM${{ github.run_id }}${{ github.run_number }} \
               --template-file ./mainTemplate.json \
               --parameters ibmUserId=${{ secrets.IBM_USER_ID }} ibmUserPwd=${{ secrets.IBM_PASSWORD }} vmAdminId=${{ env.vmAdminId }} vmAdminPwd=${{ env.vmAdminPassword }} location=eastus osVhdUri=${osVhdBlobUrl}
