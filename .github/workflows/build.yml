@@ -165,13 +165,15 @@ jobs:
           echo "::set-output name=blobUrl::$blobUrl"
       - name: Create environment variable for vhd blob url
         id: env-vhd-blob-url
-        run: echo "osVhdBlobUrl=${{steps.generate-sas-blob-url.blobUrl}}" >> $GITHUB_ENV
+        run: |
+          echo "osVhdBlobUrl=${{steps.generate-sas-blob-url.blobUrl}}" >> $GITHUB_ENV
+          echo ${osVhdBlobUrl}
       - name: Deploy VM using VHD
         run: |
           cd ${{ env.offerName }}/test
           az deployment group create --resource-group ${{ env.storageResourceGroup }} \
               --name targetVM${{ github.run_id }}${{ github.run_number }} \
               --template-file ./mainTemplate.json \
-              --parameters ibmUserId=${{ secrets.IBM_USER_ID }} ibmUserPwd=${{ secrets.IBM_PASSWORD }} vmAdminId=${{ env.vmAdminId }} vmAdminPwd=${{ env.vmAdminPassword }} location=eastus osVhdUri=${osVhdBlobUrl}
+              --parameters ibmUserId=${{ secrets.IBM_USER_ID }} ibmUserPwd=${{ secrets.IBM_PASSWORD }} vmAdminId=${{ env.vmAdminId }} vmAdminPwd=${{ env.vmAdminPassword }} location=eastus osVhdUri="${osVhdBlobUrl}"
           
               
